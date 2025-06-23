@@ -81,7 +81,7 @@ A: Yes. Customize `agent.sh` to use `virtualenv`, `docker`, etc.
 A: Bash. Zsh users can adapt aliases in `.zshrc`
 
 ## 🛡️ Usage Rights & Warranty
-This plugin is MIT-licensed. Use at your own risk. No warranty is provided.
+This plugin is GPLv2. Use at your own risk. No warranty is provided.
 
 ## 📚 References
 - https://platform.openai.com/docs  
