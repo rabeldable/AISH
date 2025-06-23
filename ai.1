@@ -1,0 +1,69 @@
+.TH ai 1 "June 2025" "AI Shell Plugin" "User Commands"
+.SH NAME
+ai \- native AI integration for your shell
+
+.SH SYNOPSIS
+.B @ prompt
+.br
+.B % # command
+.br
+.B /term
+.br
+.B !@, !%
+
+.SH DESCRIPTION
+The
+.B ai
+shell plugin provides native terminal integration with AI systems.
+
+Commands are prefixed with:
+.TP
+.B @
+Send prompt to AI (OpenAI, Gemini, Meta)
+.TP
+.B %
+Run task in configured workspace using `eval`
+.TP
+.B /
+Search AI prompt/response history
+.TP
+.B !@
+Replay last AI prompt
+.TP
+.B !%
+Replay last agent command
+
+.SH CONFIGURATION
+The plugin reads settings from
+.I ~/.ai_conf
+:
+.TP
+.B ACTIVE_AI
+Vendor: openai, gemini, meta
+.TP
+.B AI_SYSTEM_PROMPT
+Optional system prompt prefix
+.TP
+.B AI_RESPONSE_FORMAT
+plaintext, json, shell, markdown
+.TP
+.B AI_WORKSPACE_DIR
+Working directory for % tasks
+
+.SH FILES
+.TP
+.I ~/.ai_conf
+User configuration
+.TP
+.I ~/.ai_history.json
+Prompt/response history
+
+.SH AUTHOR
+AI Shell Plugin Project
+
+.SH SEE ALSO
+.BR bash (1),
+.BR curl (1),
+.BR jq (1)
+
+Project repo: https://github.com/rabeldable/AISH
