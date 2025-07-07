@@ -67,6 +67,28 @@ function setup_config() {
   local os_name
   if [ -r /etc/os-release ]; then
     os_name=$(grep '^PRETTY_NAME=' /etc/os-release | cut -d= -f2- | tr -d '"')
+  elif command -v lsb_release >/dev/null 2>&1; then
+    os_name=$(lsb_release -ds)
+  elif [ -r /etc/lsb-release ]; then
+    os_name=$(grep '^DISTRIB_DESCRIPTION=' /etc/lsb-release | cut -d= -f2- | tr -d '"')
+  elif [ -r /etc/debian_version ]; then
+    os_name="Debian $(cat /etc/debian_version)"
+  elif [ -r /etc/redhat-release ]; then
+    os_name=$(cat /etc/redhat-release)
+  elif [ -r /etc/system-release ]; then
+    os_name=$(cat /etc/system-release)
+  elif [ -r /etc/SuSE-release ]; then
+    os_name=$(cat /etc/SuSE-release)
+  elif [ -r /etc/arch-release ]; then
+    os_name="Arch Linux"
+  elif [ -r /etc/alpine-release ]; then
+    os_name="Alpine Linux $(cat /etc/alpine-release)"
+  elif uname | grep -iq cygwin; then
+    os_name="Cygwin $(uname -r)"
+  elif [ "$(uname)" = "Darwin" ] && command -v sw_vers >/dev/null 2>&1; then
+    os_name="$(sw_vers -productName) $(sw_vers -productVersion)"
+  elif uname | grep -Eiq 'freebsd|openbsd|netbsd'; then
+    os_name="$(uname -s) $(uname -r)"
   else
     os_name="$(uname -s) $(uname -r)"
   fi
