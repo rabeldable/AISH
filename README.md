@@ -46,7 +46,7 @@ AISH/
 
 ## 🚀 Getting Started
 ```bash
-git clone https://github.com/rabeldable/ai-shell-plugin.git
+git clone https://github.com/rabeldable/AISH.git
 cd AISH
 chmod +x install.sh
 ./install.sh
