@@ -1,62 +1,105 @@
-.TH ai 1 "June 2025" "AI Shell Plugin" "User Commands"
+.TH ai 1 "July 2025" "AI Shell Plugin" "User Commands"
 .SH NAME
 ai \- native AI integration for your shell
 
 .SH SYNOPSIS
 .B @ prompt
 .br
-.B % # command
+.B % command
 .br
-.B /term
+.B !@
 .br
-.B !@, !%
+.B !%
 
 .SH DESCRIPTION
 The
 .B ai
 shell plugin provides native terminal integration with AI systems.
 
-Commands are prefixed with:
+User commands are prefixed as follows:
 .TP
 .B @
-Send prompt to AI (OpenAI, Gemini, Meta)
+Send a natural language prompt to the configured AI vendor (OpenAI, Gemini, Meta).  
+Supports subcommands such as \fBcmd\fR (request shell commands) and \fBexplain\fR (request explanations).
+
 .TP
 .B %
-Run task in configured workspace using `eval`
-.TP
-.B /
-Search AI prompt/response history
+Execute predefined or custom tasks within the configured workspace directory. Tasks are run using a sanitized \fBeval\fR for safety.
+
 .TP
 .B !@
-Replay last AI prompt
+Replay the last AI prompt sent with \fB@\fR.
+
 .TP
 .B !%
-Replay last agent command
+Replay the last agent command executed with \fB%\fR.
 
 .SH CONFIGURATION
 The plugin reads settings from
 .I ~/.ai_conf
 :
+
 .TP
 .B ACTIVE_AI
-Vendor: openai, gemini, meta
+Select the active AI vendor: \fIopenai\fR, \fIgemini\fR.
+
+.TP
+.B OPENAI_API_KEY, GEMINI_API_KEY
+API keys for respective AI vendors.
+
+.TP
+.B OPENAI_MODEL, GEMINI_MODEL
+Model names for each vendor.
+
 .TP
 .B AI_SYSTEM_PROMPT
-Optional system prompt prefix
+Optional system prompt prefix sent with every AI request.
+
 .TP
 .B AI_RESPONSE_FORMAT
-plaintext, json, shell, markdown
+Preferred format for AI responses: plaintext, json, shell, markdown.
+
 .TP
 .B AI_WORKSPACE_DIR
-Working directory for % tasks
+Path to the workspace directory where \fB%\fR commands execute.
+
+.TP
+.B DEBUG_MODE
+Enable verbose logging and debug information (true/false).
 
 .SH FILES
 .TP
 .I ~/.ai_conf
-User configuration
+User configuration file.
+
 .TP
 .I ~/.ai_history.json
-Prompt/response history
+Stores prompt and response history for replay and search.
+
+.SH EXAMPLES
+.TP
+.B @ cmd list files in current directory
+Requests a shell command from the AI to list files.
+
+.TP
+.B @ explain how bash aliases work
+Requests an explanation of bash aliases.
+
+.TP
+.B % show ACTIVE_AI
+Displays the current active AI vendor configuration.
+
+.TP
+.B % set ACTIVE_AI openai
+Sets the active AI vendor to OpenAI.
+
+.TP
+.B !@
+Replays the last AI prompt.
+
+.TP
+.B !%
+Replays the last workspace task.
 
 .SH AUTHOR
 AI Shell Plugin Project
@@ -66,4 +109,6 @@ AI Shell Plugin Project
 .BR curl (1),
 .BR jq (1)
 
-Project repo: https://github.com/rabeldable/AISH
+.SH PROJECT
+Project repository: https://github.com/rabeldable/AISH
+
