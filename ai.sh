@@ -17,22 +17,60 @@ source "$(dirname "$BASH_SOURCE")/vendors/meta.sh"
 source "$(dirname "$BASH_SOURCE")/agent.sh"
 
 ai() {
-  input="$*"
-  log_history "@" "$input"
+  args=("$@")
+  # Log the raw input line (joined)
+  log_history "@" "${args[*]}"
 
-  # Build prompt with optional system prefix
-  prompt="${AI_SYSTEM_PROMPT:+$AI_SYSTEM_PROMPT\n}$input"
+  system_prompt=""
+  user_input=""
 
-  # Route to active vendor
+  # Determine system prompt from prefix (first arg)
+  if [[ "${args[0]}" == "cmd" ]]; then
+    system_prompt="$AI_SYSTEM_PROMPT_CMD"
+  elif [[ "${args[0]}" == "explain" ]]; then
+    system_prompt="$AI_SYSTEM_PROMPT_EXPLAIN"
+  else
+    system_prompt="$AI_SYSTEM_PROMPT_CMD"
+  fi
+
+  # Combine args after prefix as initial input (skip prefix if recognized)
+  if [[ "${args[0]}" == "cmd" || "${args[0]}" == "explain" ]]; then
+    user_input="${args[@]:1}"
+  else
+    user_input="${args[@]}"
+  fi
+
+  echo "Enter your input. End with a single '.' on a line by itself or press Ctrl-D."
+
+  # Read additional multiline input, append if any
+  while IFS= read -r line; do
+    [[ "$line" == "." ]] && break
+    user_input+=$'\n'"$line"
+  done
+
+  # Remove trailing newline if any
+  user_input="${user_input%$'\n'}"
+
+  # Build JSON payload for Chat Completion API
+  messages_json=$(jq -n --arg sp "$system_prompt" --arg ui "$user_input" --arg model "$OPENAI_MODEL" '
+  {
+    "model": $model,
+    "messages": [
+      {"role": "system", "content": $sp},
+      {"role": "user", "content": $ui}
+    ]
+  }')
+
+  # Route to active AI vendor
   case "$ACTIVE_AI" in
     openai)
-      response=$(ai_openai "$prompt")
+      response=$(ai_openai "$messages_json")
       ;;
     gemini)
-      response=$(ai_gemini "$prompt")
+      response=$(ai_gemini "$messages_json")
       ;;
     meta)
-      response=$(ai_meta "$prompt")
+      response=$(ai_meta "$messages_json")
       ;;
     *)
       echo "❌ Unknown ACTIVE_AI: $ACTIVE_AI"
@@ -40,8 +78,7 @@ ai() {
       ;;
   esac
 
-  # Security check
-  check_response_security "$response"
+  # Output AI response
   echo "$response"
 }
 
@@ -57,4 +94,5 @@ search_history() {
 
 alias @='ai'
 alias %='agent'
-alias /='search_history'
+alias _='search_history'
+
