@@ -12,40 +12,72 @@ function prompt_for_input() {
 }
 
 function prompt_for_openai_model() {
-	echo "Select OpenAI model to use:"
-	echo "1) gpt-3.5-turbo (lowest cost)"
-	echo "2) gpt-4.1-nano (low-cost GPT-4)"
-	echo "3) gpt-4.1-mini (mid-range GPT-4)"
-	echo "4) gpt-4o-mini (alternate GPT-4 mini)"
-	read -rp "Enter choice [1-4, default 1]: " model_choice
-	case "$model_choice" in
-	  2) selected_model="gpt-4.1-nano" ;;
-	  3) selected_model="gpt-4.1-mini" ;;
-	  4) selected_model="gpt-4o-mini" ;;
-	  *) selected_model="gpt-3.5-turbo" ;;
-	esac
-	echo "OPENAI_MODEL=\"$selected_model\"" >> "$CONFIG_FILE"
+  # Load models from config file for display
+  local models
+  models=$(grep '^OPENAI_MODELS=' "$CONFIG_FILE" | cut -d= -f2- | tr -d '"')
+  IFS=' ' read -r -a model_array <<< "$models"
+
+  echo "Select OpenAI model to use:"
+  for i in "${!model_array[@]}"; do
+    echo "$((i+1))) ${model_array[$i]}"
+  done
+
+  read -rp "Enter choice [1-${#model_array[@]}, default 1]: " model_choice
+  if [[ "$model_choice" =~ ^[1-9][0-9]*$ ]] && (( model_choice >= 1 && model_choice <= ${#model_array[@]} )); then
+    selected_model="${model_array[$((model_choice-1))]}"
+  else
+    selected_model="${model_array[0]}"
+  fi
+  echo "OPENAI_MODEL=\"$selected_model\"" >> "$CONFIG_FILE"
+}
+
+function prompt_for_gemini_model() {
+  # Load Gemini models from config file for display
+  local models
+  models=$(grep '^GEMINI_MODELS=' "$CONFIG_FILE" | cut -d= -f2- | tr -d '"')
+  IFS=' ' read -r -a model_array <<< "$models"
+
+  echo "Select Gemini model to use:"
+  for i in "${!model_array[@]}"; do
+    echo "$((i+1))) ${model_array[$i]}"
+  done
+
+  read -rp "Enter choice [1-${#model_array[@]}, default 1]: " model_choice
+  if [[ "$model_choice" =~ ^[1-9][0-9]*$ ]] && (( model_choice >= 1 && model_choice <= ${#model_array[@]} )); then
+    selected_model="${model_array[$((model_choice-1))]}"
+  else
+    selected_model="${model_array[0]}"
+  fi
+  echo "GEMINI_MODEL=\"$selected_model\"" >> "$CONFIG_FILE"
 }
 
 function setup_config() {
   echo "# AI Shell Plugin Configuration" > "$CONFIG_FILE"
+
+  # Write allowed models for OpenAI and Gemini
+  echo 'OPENAI_MODELS="gpt-3.5-turbo gpt-4.1-nano gpt-4.1-mini gpt-4o-mini"' >> "$CONFIG_FILE"
+  echo 'GEMINI_MODELS="gemini-2.5-flash gemini-2.5-flash-lite-preview-06-17 gemini-2.0-flash"' >> "$CONFIG_FILE"
+
   prompt_for_input "OPENAI_API_KEY" "Enter your OpenAI API Key"
   prompt_for_input "GEMINI_API_KEY" "Enter your Gemini API Key (optional)"
   prompt_for_input "META_API_KEY" "Enter your Meta API Key (optional)"
   prompt_for_input "ACTIVE_AI" "Set default AI vendor (openai/gemini/meta)"
 
-  # Read PRETTY_NAME from /etc/os-release, fallback to generic "Linux"
+  # Detect OS name for system prompt
+  local os_name
   if [ -r /etc/os-release ]; then
     os_name=$(grep '^PRETTY_NAME=' /etc/os-release | cut -d= -f2- | tr -d '"')
   else
-    os_name="Linux"
+    os_name="$(uname -s) $(uname -r)"
   fi
 
   echo "AI_SYSTEM_PROMPT_CMD=\"You are a $os_name expert. Respond ONLY with the exact shell command requested. Do NOT include explanations, comments, or polite phrases. Plain text only, no formatting.\"" >> "$CONFIG_FILE"
   echo "AI_SYSTEM_PROMPT_EXPLAIN=\"You are a $os_name expert. Provide clear, helpful explanations or troubleshooting advice as appropriate.\"" >> "$CONFIG_FILE"
 
   prompt_for_input "AI_RESPONSE_FORMAT" "Preferred response format (plaintext/json/shell)"
+
   prompt_for_openai_model
+  prompt_for_gemini_model
 
   read -rp "Enter workspace directory [default: $HOME/ai_workspace]: " workspace_dir
   workspace_dir=${workspace_dir:-"$HOME/ai_workspace"}
@@ -57,15 +89,16 @@ function update_shell_profile() {
   local profile_file="$HOME/.bashrc"
   [[ $SHELL == */zsh ]] && profile_file="$HOME/.zshrc"
 
-  # Remove existing AISH block to avoid duplicates
   sed -i '/#BEGIN_AISH/,/#END_AISH/d' "$profile_file"
 
-  echo "" >> "$profile_file"  # Proper newline
-  echo "#BEGIN_AISH" >> "$profile_file"
-  echo "# Load AI Shell Plugin" >> "$profile_file"
-  echo "[ -f $PWD/ai.sh ] && source $PWD/ai.sh" >> "$profile_file"
-  echo "[ -f $CONFIG_FILE ] && source $CONFIG_FILE" >> "$profile_file"
-  echo "#END_AISH" >> "$profile_file"
+  {
+    echo ""
+    echo "#BEGIN_AISH"
+    echo "# Load AI Shell Plugin"
+    echo "[ -f $PWD/ai.sh ] && source $PWD/ai.sh"
+    echo "[ -f $CONFIG_FILE ] && source $CONFIG_FILE"
+    echo "#END_AISH"
+  } >> "$profile_file"
 
   echo "✅ Shell profile updated ($profile_file). Please restart your terminal or run:"
   echo "source $profile_file"
@@ -89,3 +122,4 @@ function main() {
 }
 
 main
+

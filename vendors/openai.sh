@@ -1,5 +1,7 @@
 #!/bin/bash
 
+OPENAI_API_URL=https://api.openai.com/v1/chat/completions
+
 ai_openai() {
   local json_payload="$1"
   curl -s -X POST "$OPENAI_API_URL" \
